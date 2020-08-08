@@ -7,7 +7,7 @@ use std::str::FromStr;
 
 /// A literal value from an AIGER file, encoding both a variable index and "sign
 /// bit" which determines if the variable is negated/inverted.
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash)]
 #[repr(transparent)]
 pub struct Literal(pub usize);
 
@@ -30,7 +30,7 @@ impl Literal {
 }
 
 /// The data contained in the header of an AIGER file.
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 pub struct Header {
     /// The maximum variable index.
     pub m: usize,
@@ -81,7 +81,7 @@ impl FromStr for Header {
 }
 
 /// A record from an AIGER file.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 pub enum Aiger {
     /// A literal marked as an input.
     Input(Literal),
@@ -173,7 +173,7 @@ impl Aiger {
 }
 
 /// An error which occurs while parsing an AIGER file.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 pub enum AigerError {
     /// No AIGER header could be found, or the header which was found could not
     /// be parsed.
