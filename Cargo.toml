@@ -1,0 +1,15 @@
+[package]
+name = "aiger"
+version = "0.1.0"
+description = "AIGER (And-Inverter graph) file format parser"
+keywords = ["aiger", "aig"]
+categories = ["parser-implementations"]
+authors = ["The6P4C <watsonjcampbell@gmail.com>"]
+repository = "https://github.com/The6P4C/aiger.git"
+homepage = "https://github.com/The6P4C/aiger"
+license = "MIT"
+readme = "README.md"
+documentation = "https://docs.rs/aiger"
+edition = "2018"
+
+[dependencies]
