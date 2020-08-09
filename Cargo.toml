@@ -1,6 +1,6 @@
 [package]
 name = "aiger"
-version = "0.1.1"
+version = "0.2.0"
 description = "AIGER (And-Inverter graph) file format parser"
 keywords = ["aiger", "aig"]
 categories = ["parser-implementations"]
