@@ -41,6 +41,8 @@ pub struct Header {
     pub o: usize,
     /// The number of AND gates.
     pub a: usize,
+    /// The bad state
+    pub b: usize,
 }
 
 impl FromStr for Header {
@@ -68,13 +70,17 @@ impl FromStr for Header {
         let l = get_component()?;
         let o = get_component()?;
         let a = get_component()?;
+        let b = match get_component() {
+            Ok(b) => b,
+            Err(_) => 0,
+        };
 
         if components.next() != None {
             // We have extra components after what should've been the last
             // component
             Err(AigerError::InvalidHeader)
         } else {
-            Ok(Header { m, i, l, o, a })
+            Ok(Header { m, i, l, o, a, b })
         }
     }
 }
@@ -106,6 +112,8 @@ pub enum Aiger {
     },
     /// A literal marked as an output.
     Output(Literal),
+    /// A literal marked as a bad state.
+    BadState(Literal),
     /// An AND gate.
     AndGate {
         /// The literal which receives the result of the AND operation.
@@ -168,6 +176,7 @@ impl Aiger {
                 init,
             } => vec![output, input, Literal(init.into())],
             Aiger::Output(l) => vec![l],
+            Aiger::BadState(l) => vec![l],
             Aiger::AndGate {
                 output,
                 inputs: [input0, input1],
@@ -210,6 +219,13 @@ impl Aiger {
     fn parse_output(literals: &[Literal]) -> Result<Aiger, AigerError> {
         match literals {
             [input] => Ok(Aiger::Output(*input)),
+            _ => Err(AigerError::InvalidLiteralCount),
+        }
+    }
+
+    fn parse_badstate(literals: &[Literal]) -> Result<Aiger, AigerError> {
+        match literals {
+            [input] => Ok(Aiger::BadState(*input)),
             _ => Err(AigerError::InvalidLiteralCount),
         }
     }
@@ -348,6 +364,8 @@ pub struct RecordsIter<T: io::Read> {
     remaining_outputs: usize,
     /// Number of AND gates which are yet to be parsed.
     remaining_and_gates: usize,
+    /// Number of AND gates which are yet to be parsed.
+    remaining_bad_states: usize,
     /// True if we have reached a comment in the file.
     comment_reached: bool,
 }
@@ -361,6 +379,7 @@ impl<T: io::Read> RecordsIter<T> {
             remaining_latches: header.l,
             remaining_outputs: header.o,
             remaining_and_gates: header.a,
+            remaining_bad_states: header.b,
             comment_reached: false,
         }
     }
@@ -383,6 +402,9 @@ impl<T: io::Read> RecordsIter<T> {
         } else if self.remaining_outputs > 0 {
             self.remaining_outputs -= 1;
             Aiger::parse_output(&get_literals()?)
+        } else if self.remaining_bad_states > 0 {
+            self.remaining_bad_states -= 1;
+            Aiger::parse_badstate(&get_literals()?)
         } else if self.remaining_and_gates > 0 {
             self.remaining_and_gates -= 1;
             Aiger::parse_and_gate(&get_literals()?)
@@ -516,6 +538,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -543,6 +566,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 1,
+                b: 0,
             }
         );
 
@@ -571,6 +595,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -595,6 +620,7 @@ mod tests {
                 l: 0,
                 o: 0,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -619,6 +645,7 @@ mod tests {
                 l: 0,
                 o: 0,
                 a: 1,
+                b: 0,
             }
         );
 
@@ -643,6 +670,7 @@ mod tests {
                 l: 1,
                 o: 0,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -668,6 +696,7 @@ mod tests {
                 l: 0,
                 o: 0,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -694,6 +723,7 @@ mod tests {
                 l: 1,
                 o: 0,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -720,6 +750,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -747,6 +778,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 1,
+                b: 0,
             }
         );
 
@@ -774,6 +806,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -800,6 +833,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -826,6 +860,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -852,6 +887,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -876,6 +912,7 @@ mod tests {
                 l: 0,
                 o: 0,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -900,6 +937,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -925,6 +963,7 @@ mod tests {
                 l: 0,
                 o: 0,
                 a: 0,
+                b: 0,
             }
         );
 
@@ -953,6 +992,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 1,
+                b: 0,
             }
         );
 
@@ -990,6 +1030,7 @@ mod tests {
                 l: 0,
                 o: 1,
                 a: 1,
+                b: 0,
             }
         );
 
@@ -1036,6 +1077,7 @@ mod tests {
                 l: 0,
                 o: 2,
                 a: 3,
+                b: 0,
             }
         );
 
@@ -1130,6 +1172,7 @@ mod tests {
                 l: 1,
                 o: 2,
                 a: 4,
+                b: 0,
             }
         );
 
