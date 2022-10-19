@@ -101,6 +101,8 @@ pub enum Aiger {
         output: Literal,
         /// The literal which determines the latch's next state.
         input: Literal,
+        /// The init value of latch
+        init: bool,
     },
     /// A literal marked as an output.
     Output(Literal),
@@ -160,7 +162,11 @@ impl Aiger {
 
         let literals = match self {
             Aiger::Input(l) => vec![l],
-            Aiger::Latch { output, input } => vec![output, input],
+            Aiger::Latch {
+                output,
+                input,
+                init,
+            } => vec![output, input, Literal(init.into())],
             Aiger::Output(l) => vec![l],
             Aiger::AndGate {
                 output,
@@ -190,6 +196,12 @@ impl Aiger {
             [output, input] => Ok(Aiger::Latch {
                 output: *output,
                 input: *input,
+                init: false,
+            }),
+            [output, input, init] => Ok(Aiger::Latch {
+                output: *output,
+                input: *input,
+                init: init.0 != 0,
             }),
             _ => Err(AigerError::InvalidLiteralCount),
         }
@@ -1129,6 +1141,7 @@ mod tests {
             Some(Ok(Aiger::Latch {
                 output: Literal(6),
                 input: Literal(8),
+                init: false
             }))
         );
         assert_eq!(records.next(), Some(Ok(Aiger::Output(Literal(6)))));
